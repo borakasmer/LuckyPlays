@@ -1,0 +1,459 @@
+﻿@{
+    ViewBag.Title = "Index";
+}
+<header>
+    <meta charset="utf-8">
+    <title>animate demo</title>
+    <style>
+        div.block
+        {
+            position: absolute;
+            background-image: url('../img/luckyRight.jpg');
+            left: 20px;
+            width: 80px;
+            height: 80px;
+            margin: 5px;
+            top: 300px;
+            z-index: 2;
+        }
+
+        div.ball
+        {
+            position: absolute;
+            background-image: url('../img/ball3.png');
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            top: 300px;
+            z-index: 1;
+        }
+
+        button.run
+        {
+            background-color: #5BB75B;
+            background-image: -moz-linear-gradient(center top, #62C462, #51A351);
+            background-repeat: repeat-x;
+            border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+            border-radius: 5px 5px 5px 5px;
+            font-size: 15px;
+            color: white;
+            line-height: normal;
+            padding: 9px 14px;
+            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+        }
+
+        button.reset
+        {
+            border-radius: 5px 5px 5px 5px;
+            font-size: 13px;
+            line-height: normal;
+            padding: 9px 14px;
+            background-color: #F5F5F5;
+            background-image: -moz-linear-gradient(center top, #FFFFFF, #E6E6E6);
+            background-repeat: repeat-x;
+            border-color: #CCCCCC #CCCCCC #B3B3B3;
+            border-image: none;
+            border-style: solid;
+            border-width: 1px;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+            color: #333333;
+            cursor: pointer;
+            display: inline-block;
+            text-align: center;
+            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+            vertical-align: middle;
+            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+        }
+
+        button.list
+        {
+            background-color: #49AFCD;
+            background-image: -moz-linear-gradient(center top, #5BC0DE, #2F96B4);
+            background-repeat: repeat-x;
+            border-color: rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.1) rgba(0, 0, 0, 0.25);
+            color: #FFFFFF;
+            text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+            font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+            border-style: solid;
+            border-width: 1px;
+            box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+            border-radius: 5px 5px 5px 5px;
+            font-size: 15px;
+            line-height: normal;
+            padding: 9px 14px;
+        }
+
+        div.counter
+        {
+            color: orange;
+            font-weight: bold;
+            font-size: 180px;
+        }
+
+        td.counter
+        {
+            vertical-align: text-top;
+            color: rgb(71, 156, 213);
+            font-weight: bold;
+            font-size: 30px;
+        }
+
+        i.counter
+        {
+            color: rgb(213, 71, 207);
+            font-weight: bold;
+            font-size: 80px;
+        }
+
+        i.counter2
+        {
+            color: red;
+            font-size: 45px;
+        }
+
+        i.counter3
+        {
+            color: gray;
+            font-weight: bold;
+            font-size: 80px;
+        }
+
+        td.counter2
+        {
+            vertical-align: text-top;
+            color: black;
+            font-weight: bold;
+            font-size: 30px;
+            width: 100%;
+            display: none;
+        }
+    </style>
+    <script src="@Url.Content("~/Scripts/jquery-2.0.3.min.js")" type="text/javascript"></script>
+    <script src="@Url.Content("~/Scripts/jquery.signalR-2.0.0-rc1.min.js")" type="text/javascript"></script>
+    <script src="@Url.Content("~/signalr/hubs")"></script>
+    <script>
+        var wait;
+        var commandServerCounter;
+        var commandLength
+        var messagehub = $.connection.serverTime;
+        messagehub.client.settime = function (t, moves, top, left) {
+            $("#Time").html(t);
+            $("#Time2").html(t);
+            if (commandLength == 0 || commandLength == undefined) {
+                $("#counter").html(moves);
+                commandServerCounter = moves;
+            }
+            $(".ball").css({ "left": left, "top": top });
+            if (t == 90) {
+                $("#resultTD").hide();
+                //$("#Time").show();
+                $(".counter").show();
+                $("#run").attr('onclick', 'RunCommand();');
+                $("#run").css('background-color', '#5BB75B');
+                clearInterval(wait);
+                $(".block").css({ "left": "20px", "top": "300px" });
+                $(".block").css('background-image', 'url(../img/luckyRight.jpg)');
+                $("#command").val('');
+                $("#command").focus();
+                $("#counter").html(moves);
+                commandServerCounter = moves;
+            }
+        };
+
+        var check = null;
+        function timeout_init() {
+            clearInterval(check);
+            check = setInterval(function () { messagehub.server.startTime(); clearInterval(check); }, 1000);
+        }
+        $.connection.hub.start();
+
+        function playSound(url) {
+            document.getElementById("sound").innerHTML = "<embed src='" + url + "' hidden=true autostart=true loop=false>";
+        }
+        function Reset() {
+            $(".block").css({ "left": "20px", "top": "300px" });
+            $(".block").css('background-image', 'url(../img/luckyRight.jpg)');
+            clearInterval(wait);
+        }
+        function ShowList() {
+            if ($("#divList").css('display') == 'none') {
+                $("#divList").animate({ "opacity": "toggle" }, "slow");
+            }
+            else {
+                $("#divList").hide(1000);
+            }
+        }
+        function RunCommand() {
+            commandList = $("#command").val().split("\n");
+            wait = setInterval(function () {
+                console.log('length:' + commandList.length)
+                if (commandList.length == 0 || commandList[0].trim() == "") { console.log('stop'); clearInterval(wait); }
+                for (i = 0; i < commandList.length; i++) {
+                    console.log("command:" + commandList[i]);
+                    if (!$(".block").is(":animated")) {
+                        console.log('not animated');
+                        var pos = $(".block").offset();
+                        switch (commandList[i]) {
+                            case 'move();':
+                                commandList.splice(0, 1);
+                                if ((pos.left + 75) < 350) {
+                                    console.log('move');
+                                    $(".block").css('background-image', 'url(../img/luckyRight.jpg)');
+                                    $(".block").animate({ "left": "+=75px" }, "slow", function () {
+                                        if (checkCordinate()) {
+                                            playSound('../img/ok.wav');
+                                            //$("#Time").hide();
+                                            $(".counter").hide();
+                                            $("#resulImg").attr("src", "/img/winner.jpg");
+                                            $("#resultTD").show();
+                                        }
+                                    });
+                                }
+                                else {
+                                    $(".block").animate({ "left": "=" + pos.left + "px" }, "slow", function () {
+                                        if (checkCordinate()) {
+                                            playSound('../img/ok.wav');
+                                            //$("#Time").hide();
+                                            $(".counter").hide();
+                                            $("#resulImg").attr("src", "/img/winner.jpg");
+                                            $("#resultTD").show();
+                                        }
+                                    });
+                                }
+                                break;
+                            case 'left();':
+                                commandList.splice(0, 1);
+                                if ((pos.left - 75) > 20) {
+                                    console.log('left');
+                                    $(".block").css('background-image', 'url(../img/luckyLft.png)');
+                                    $(".block").animate({ "left": "-=75px" }, "slow", function () {
+                                        if (checkCordinate()) {
+                                            playSound('../img/ok.wav');
+                                            //$("#Time").hide();
+                                            $(".counter").hide();
+                                            $("#resulImg").attr("src", "/img/winner.jpg");
+                                            $("#resultTD").show();
+                                        }
+                                    });
+                                }
+                                else {
+                                    $(".block").animate({ "left": "=" + pos.left + "px" }, "slow", function () {
+                                        if (checkCordinate()) {
+                                            playSound('../img/ok.wav');
+                                            //$("#Time").hide();
+                                            $(".counter").hide();
+                                            $("#resulImg").attr("src", "/img/winner.jpg");
+                                            $("#resultTD").show();
+                                        }
+                                    });
+                                }
+                                break;
+                            case 'up();':
+                                commandList.splice(0, 1);
+                                if ((pos.top - 75) > 0) {
+                                    console.log('up');
+                                    $(".block").css('background-image', 'url(../img/luckyU.png)');
+                                    $(".block").animate({ "top": "-=75px" }, "slow", function () {
+                                        if (checkCordinate()) {
+                                            playSound('../img/ok.wav');
+                                            //$("#Time").hide();
+                                            $(".counter").hide();
+                                            $("#resulImg").attr("src", "/img/winner.jpg");
+                                            $("#resultTD").show();
+                                        }
+                                    });
+                                }
+                                else {
+                                    $(".block").animate({ "top": "=" + pos.top + "px" }, "slow", function () {
+                                        if (checkCordinate()) {
+                                            playSound('../img/ok.wav');
+                                            //$("#Time").hide();
+                                            $(".counter").hide();
+                                            $("#resulImg").attr("src", "/img/winner.jpg");
+                                            $("#resultTD").show();
+                                        }
+                                    });
+                                }
+                                break;
+                            case 'down();':
+                                commandList.splice(0, 1);
+                                if ((pos.top + 75) < 310) {
+                                    console.log('down');
+                                    $(".block").css('background-image', 'url(../img/luckyDwn.png)');
+                                    $(".block").animate({ "top": "+=75px" }, "slow", function () {
+                                        if (checkCordinate()) {
+                                            playSound('../img/ok.wav');
+                                            //$("#Time").hide();
+                                            $(".counter").hide();
+                                            $("#resulImg").attr("src", "/img/winner.jpg");
+                                            $("#resultTD").show();
+                                        }
+                                    });
+                                }
+                                else {
+                                    $(".block").animate({ "top": "=" + pos.top + "px" }, "slow", function () {
+                                        if (checkCordinate()) {
+                                            playSound('../img/ok.wav');
+                                            //$("#Time").hide();
+                                            $(".counter").hide();
+                                            $("#resulImg").attr("src", "/img/winner.jpg");
+                                            $("#resultTD").show();
+                                        }
+                                    });
+                                }
+                                break;
+                            default:
+                        }
+                    }
+                    else { console.log('animated'); }
+                }
+            }, 200);
+        }
+        $(document).ready(function () {
+            timeout_init();
+            var wait;
+            $("#command").focus();
+
+            $("#command").keyup(function (e) {
+                //if (e.which == 13 || e.which == 8 || e.which == 46)
+                //{
+                if ($("#command").val().trim() != "") {
+                    if (checkMoves()) {
+                        $("#counter").attr("class", "counter");
+                        commandLength = $("#command").val().split("();").length - 1;
+                    }
+                    else {
+                        $("#counter").attr("class", "counter3");
+                    }
+                    console.log(commandLength);
+                    $("#counter").html((commandServerCounter - commandLength));
+                    if ((commandServerCounter - commandLength) < 0) {
+                        $("#run").attr('onclick', '');
+                        $("#run").css('background-color', 'gray');
+                    }
+                    else {
+                        $("#run").attr('onclick', 'RunCommand();');
+                        $("#run").css('background-color', '#5BB75B');
+                    }
+                    if (checkMoves() == false) {
+                        $("#run").attr('onclick', '');
+                        $("#run").css('background-color', 'gray');
+                    }
+                }
+                else { $("#counter").html(commandServerCounter); }
+                //}
+            });
+        });
+        function checkCordinate() {
+            var dog = $(".block");
+            var positionDog = dog.position();
+
+            var ball = $(".ball");
+            var positionBall = ball.position();
+            console.log("ball:" + positionBall.left + "," + positionBall.top);
+            console.log("dog:" + positionDog.left + "," + positionDog.top);
+            console.log("dog80:" + (positionDog.left + 80) + "," + (positionDog.top + 80));
+            //if (((positionDog.left + 40 <= positionBall.left && positionDog.left + 80 <= positionBall.left + 50) ||
+            //     (positionDog.left + 40 <= positionBall.left && positionDog.left + 80 >= positionBall.left + 50) ||
+            //     (positionDog.left + 40 >= positionBall.left && positionDog.left + 40 <= positionBall.left + 50)) &&
+            //     ((positionDog.top + 40 <= positionBall.top && positionDog.top + 80 <= positionBall.top + 50) ||
+            //      (positionDog.top + 40 <= positionBall.top && positionDog.top + 80 >= positionBall.top + 50) ||
+            //      (positionDog.top + 40 >= positionBall.top && positionDog.top+40 <= positionBall.top + 50))
+            //    ) {
+            if ((positionDog.left + 40 >= positionBall.left && positionDog.left + 40 <= positionBall.left + 50) &&
+                (positionDog.top + 40 >= positionBall.top && positionDog.top + 40 <= positionBall.top + 50)) {
+                console.log("Cordinate:true");
+                console.log("Komut Uzunluğu:" + commandList.length);
+                if ((commandServerCounter - commandLength) == 0 && commandList.length == 0) {
+                    messagehub.server.resultRecord(true, $("#Time").html());
+                    $("#run").attr('onclick', '');
+                    $("#run").css('background-color', 'gray');
+                    return true;
+                }
+                else {
+                    clearInterval(wait);
+                    $(".counter").hide();
+                    $("#resultTD").show();
+                    $("#resulImg").attr("src", "/img/lost.jpg");
+                    $("#run").attr('onclick', '');
+                    $("#run").css('background-color', 'gray');
+                    messagehub.server.resultRecord(false, $("#Time").html());
+                    return false;
+                }
+            }
+            else { console.log("Cordinate:false"); return false; }
+        }
+        var moveX = 20;
+        var moveY = 300
+        function checkMoves() {
+            moveX = 20;
+            moveY = 300;
+            commandList = $("#command").val().split("\n");
+            for (i = 0; i < commandList.length; i++) {
+                switch (commandList[i]) {
+                    case 'move();':
+                        moveX += 70;
+                        break;
+                    case 'left();':
+                        moveX -= 70
+                        break;
+                    case 'down();':
+                        moveY += 70;
+                        break;
+                    case 'up();':
+                        moveY -= 70;
+                        break;
+                }
+            }
+            if (moveY > 310 || moveX < 20 || moveY < 0 || moveX > 350) {
+                console.log("checkMoves : false x:" + moveX + " y: " + moveY);
+                return false;
+            }
+            else {
+                console.log("checkMoves : true x:" + moveX + " y: " + moveY);
+                return true;
+            }
+        }
+    </script>
+</header>
+<body>
+    <table>
+        <tr>
+            <td>
+                <div style="background-image: url(/img/bgPicture.png); height: 409px; width: 409px;"></div>
+            </td>
+            <td>
+                <div>
+                    <textarea style="height: 400px; width: 350px" id="command"></textarea>
+                </div>
+            </td>
+            <td class="counter">Catch The Ball exactly <i class="counter" id="counter"></i>moves in above the seconds.              
+                <div id="Time" class="counter"></div>
+            </td>
+            <td id="resultTD" class="counter2">
+                <img id="resulImg" src="/img/winner.jpg" /><br />
+                Next match will start in
+                <i id="Time2" class="counter2"></i>
+                seconds.
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <button class="run" id="run" onclick="RunCommand();">&rArr; Run</button>
+                <button class="reset" id="Reset" onclick="Reset();">
+                    <img widht="20px" height="20px" src="/img/1381595059_101924.ico"></img>Reset
+                </button>
+                <button class="list" id="list" onclick="ShowList();">
+                    <img widht="20px" height="20px" src="/img/1381601741_53599.ico">
+                    See Lucky's Command
+                </button>
+            </td>
+        </tr>
+    </table>
+    <div class="block"></div>
+    <div class="ball"></div>
+    <span id="sound"></span>
+    <div id="divList" style="background-image: url(/img/commandList.png); position: absolute; height: 259px; width: 401px; top: 165px; left: 580px; display: none"></div>
+</body>
